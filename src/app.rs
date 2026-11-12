@@ -1,6 +1,6 @@
 use crate::sensors::{self, SensorReading, Snapshot, ThermalState};
-use cosmic::{iced::{Alignment, Length, Subscription, Task, stream}, prelude::*, theme, widget};
-use cosmic::iced::futures::SinkExt;
+use cosmic::{iced::{Alignment, Length, Subscription, futures, stream}, prelude::*, theme, widget};
+use futures::SinkExt;
 use std::{collections::HashMap, time::{Duration, Instant}};
 
 const APP_ID: &str = "io.github.guntherdoescode.Cinderwatch";
@@ -67,7 +67,8 @@ impl cosmic::Application for AppModel {
             widget::column::with_capacity(3).spacing(8)
                 .push(widget::text::body("SYSTEM STATUS"))
                 .push(widget::text::title3(summary).color(tint))
-                .push(widget::text::body(self.updated_label())),
+                .push(widget::text::body(self.updated_label()))
+                .push(widget::text::body(if self.throttle_total.is_some() { "THROTTLE TELEMETRY: AVAILABLE" } else { "THROTTLE TELEMETRY: NOT EXPOSED BY THIS KERNEL / DRIVER" })),
         ).width(Length::Fill).padding(18).class(theme::Container::Card));
 
         if let Some(error) = &self.error {
@@ -164,7 +165,7 @@ impl AppModel {
             .unwrap_or_else(|| "Initial scan in progress".to_owned())
     }
 
-    fn sensor_card(&self, reading: &SensorReading) -> Element<'_, Message> {
+    fn sensor_card<'a>(&'a self, reading: &'a SensorReading) -> Element<'a, Message> {
         let (state_label, accent) = match reading.state {
             ThermalState::Cool => ("COOL", color(72, 215, 242)),
             ThermalState::Normal => ("OPERATIONAL", color(101, 168, 255)),
