@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=Cinderwatch
+Name=COSMIC Temperature Monitor
 Comment=Live thermal monitoring for your hardware
 Type=Application
-Icon=io.github.guntherdoescode.Cinderwatch
-Exec=cinderwatch
+Icon=io.github.guntherdoescode.CosmicTemperatureMonitor
+Exec=cosmic-temperature-monitor
 Terminal=false
 StartupNotify=true
 Categories=System;Monitor;

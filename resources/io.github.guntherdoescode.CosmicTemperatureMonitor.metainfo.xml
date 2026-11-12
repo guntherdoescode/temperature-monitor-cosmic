@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.guntherdoescode.Cinderwatch</id>
+  <id>io.github.guntherdoescode.CosmicTemperatureMonitor</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <name>Cinderwatch</name>
+  <name>COSMIC Temperature Monitor</name>
   <summary>Live thermal monitoring for Linux</summary>
   <description>
     <p>A native COSMIC application that monitors temperatures reported by lm-sensors and highlights thermal warnings and observable CPU throttling events.</p>
   </description>
-  <launchable type="desktop-id">io.github.guntherdoescode.Cinderwatch.desktop</launchable>
+  <launchable type="desktop-id">io.github.guntherdoescode.CosmicTemperatureMonitor.desktop</launchable>
   <url type="vcs-browser">https://github.com/guntherdoescode/temperature-watcher-cosmic</url>
   <categories><category>System</category><category>Monitor</category></categories>
   <content_rating type="oars-1.1" />

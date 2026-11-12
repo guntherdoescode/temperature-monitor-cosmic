@@ -3,7 +3,7 @@ use cosmic::{iced::{Alignment, Length, Subscription, futures, stream}, prelude::
 use futures::SinkExt;
 use std::{collections::HashMap, time::{Duration, Instant}};
 
-const APP_ID: &str = "io.github.guntherdoescode.Cinderwatch";
+const APP_ID: &str = "io.github.guntherdoescode.CosmicTemperatureMonitor";
 const REFRESH_INTERVAL: Duration = Duration::from_secs(2);
 
 pub struct AppModel {
@@ -41,7 +41,7 @@ impl cosmic::Application for AppModel {
 
     fn view(&self) -> Element<'_, Self::Message> {
         let title = widget::column::with_capacity(2).spacing(4)
-            .push(widget::text::title1("Cinderwatch"))
+            .push(widget::text::title1("COSMIC Temperature Monitor"))
             .push(widget::text::body("THERMAL INTELLIGENCE  /  LOCAL SYSTEM"))
             .into();
         let refresh = widget::button::standard(if self.refreshing { "Scanning…" } else { "Refresh" })
@@ -93,7 +93,7 @@ impl cosmic::Application for AppModel {
             content = content.push(widget::container(
                 widget::column::with_capacity(2).spacing(8)
                     .push(widget::text::title3("No readings yet"))
-                    .push(widget::text::body("Cinderwatch is querying lm-sensors. Install lm-sensors and check that the sensors command returns readings.")),
+                    .push(widget::text::body("COSMIC Temperature Monitor is querying lm-sensors. Install lm-sensors and check that the sensors command returns readings.")),
             ).width(Length::Fill).padding(20).class(theme::Container::Card));
         } else {
             for pair in self.readings.chunks(2) {
