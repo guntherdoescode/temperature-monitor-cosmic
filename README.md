@@ -1,8 +1,8 @@
-# Cinderwatch
+# COSMIC Temperature Monitor
 
-A native Rust thermal monitor for the COSMIC desktop.
+A native Rust temperature monitor for the COSMIC desktop.
 
-Cinderwatch watches temperatures exposed by lm-sensors, presents a live sensor dashboard, and highlights thermal trouble without assuming every machine exposes identical telemetry.
+COSMIC Temperature Monitor watches temperatures exposed by lm-sensors, presents a live sensor dashboard, and highlights thermal trouble without assuming every machine exposes identical telemetry.
 
 ## Colour language
 
@@ -14,7 +14,7 @@ Sensor-provided maximum and critical limits are preferred. Conservative device-f
 
 ## Throttling detection
 
-Cinderwatch samples Linux CPU thermal-throttle counters under /sys/devices/system/cpu. It reports a throttle event only when a counter increases between scans. Some processors and drivers do not expose these counters; in that case temperature monitoring remains available, but active throttling cannot be confirmed.
+The application samples Linux CPU thermal-throttle counters under /sys/devices/system/cpu. It reports a throttle event only when a counter increases between scans. Some processors and drivers do not expose these counters; in that case temperature monitoring remains available, but active throttling cannot be confirmed.
 
 ## Requirements
 
