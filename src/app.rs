@@ -1,5 +1,6 @@
 use crate::sensors::{self, SensorReading, Snapshot, ThermalState};
 use cosmic::{iced::{Alignment, Length, Subscription, Task, stream}, prelude::*, theme, widget};
+use cosmic::iced::futures::SinkExt;
 use std::{collections::HashMap, time::{Duration, Instant}};
 
 const APP_ID: &str = "io.github.guntherdoescode.Cinderwatch";
