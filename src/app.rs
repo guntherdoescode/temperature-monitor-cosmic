@@ -111,7 +111,7 @@ impl cosmic::Application for AppModel {
     }
 
     fn subscription(&self) -> Subscription<Self::Message> {
-        Subscription::run(|| stream::channel(1, |mut sender| async move {
+        Subscription::run(|| stream::channel(1, |mut sender: futures::channel::mpsc::Sender<Message>| async move {
             let mut interval = tokio::time::interval(REFRESH_INTERVAL);
             loop {
                 interval.tick().await;
