@@ -66,14 +66,14 @@ impl cosmic::Application for AppModel {
         content = content.push(widget::container(
             widget::column::with_capacity(3).spacing(8)
                 .push(widget::text::body("SYSTEM STATUS"))
-                .push(widget::text::title3(summary).color(tint))
+                .push(widget::text::title3(summary).class(theme::Text::Color(tint)))
                 .push(widget::text::body(self.updated_label()))
                 .push(widget::text::body(if self.throttle_total.is_some() { "THROTTLE TELEMETRY: AVAILABLE" } else { "THROTTLE TELEMETRY: NOT EXPOSED BY THIS KERNEL / DRIVER" })),
         ).width(Length::Fill).padding(18).class(theme::Container::Card));
 
         if let Some(error) = &self.error {
             content = content.push(widget::container(
-                widget::text::body(format!("Sensor error: {error}")).color(color(255, 117, 117)),
+                widget::text::body(format!("Sensor error: {error}")).class(theme::Text::Color(color(255, 117, 117))),
             ).width(Length::Fill).padding(14).class(theme::Container::Card));
         }
 
@@ -174,10 +174,10 @@ impl AppModel {
         let mut heading = widget::row::with_capacity(3)
             .push(widget::text::heading(reading.label.clone()))
             .push(widget::space::horizontal())
-            .push(widget::text::body(state_label).color(accent))
+            .push(widget::text::body(state_label).class(theme::Text::Color(accent)))
             .align_y(Alignment::Center);
         if reading.throttled {
-            heading = heading.push(widget::text::body("THROTTLING").color(color(255, 92, 98)));
+            heading = heading.push(widget::text::body("THROTTLING").class(theme::Text::Color(color(255, 92, 98))));
         }
 
         let history = self.history.get(&reading.id).map(|values| sparkline(values))
@@ -185,15 +185,15 @@ impl AppModel {
         let limits = format!("WARN {:.0}°C    CRIT {:.0}°C", reading.warning, reading.critical);
         let card = widget::column::with_capacity(4).spacing(10)
             .push(heading)
-            .push(widget::text::title1(format!("{:.1}°C", reading.temperature)).color(accent))
+            .push(widget::text::title1(format!("{:.1}°C", reading.temperature)).class(theme::Text::Color(accent)))
             .push(widget::text::body(limits))
-            .push(widget::text::body(history).color(accent));
+            .push(widget::text::body(history).class(theme::Text::Color(accent)));
         widget::container(card).width(Length::Fill).padding(16).class(theme::Container::Card).into()
     }
 }
 
 fn legend_item(label: &'static str, tint: cosmic::iced::Color) -> Element<'static, Message> {
-    widget::text::body(label).color(tint).into()
+    widget::text::body(label).class(theme::Text::Color(tint)).into()
 }
 fn color(red: u8, green: u8, blue: u8) -> cosmic::iced::Color {
     cosmic::iced::Color::from_rgb8(red, green, blue)
