@@ -4,6 +4,9 @@ use std::process::Command;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThermalState { Cool, Normal, Hot }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SensorKind { Cpu, Gpu, Storage, Board, Fan, Battery, Memory, Network, Generic }
+
 #[derive(Debug, Clone)]
 pub struct SensorReading {
     pub id: String,
@@ -13,6 +16,7 @@ pub struct SensorReading {
     pub warning: f64,
     pub critical: f64,
     pub state: ThermalState,
+    pub kind: SensorKind,
     pub throttled: bool,
 }
 
@@ -67,6 +71,7 @@ fn walk_chip(chip: &str, object: &Map<String, Value>, path: &mut Vec<String>, re
 
             readings.push(SensorReading {
                 id: format!("{chip}:{}:{prefix}", path.join("/")),
+                kind: classify(chip, &label),
                 chip: chip.to_owned(), label, temperature, warning, critical, state, throttled,
             });
         } else if let Some(child) = value.as_object() {
@@ -77,6 +82,20 @@ fn walk_chip(chip: &str, object: &Map<String, Value>, path: &mut Vec<String>, re
             }
         }
     }
+}
+
+fn classify(chip: &str, label: &str) -> SensorKind {
+    let hint = format!("{chip} {label}").to_ascii_lowercase();
+    let has = |needles: &[&str]| needles.iter().any(|needle| hint.contains(needle));
+    if has(&["nvme", "drivetemp", "composite", "ssd", "hdd", "scsi", "sata"]) { SensorKind::Storage }
+    else if has(&["amdgpu", "nouveau", "radeon", "i915", "gpu", "junction", "edge"]) { SensorKind::Gpu }
+    else if is_cpu_sensor(chip, label) { SensorKind::Cpu }
+    else if has(&["fan"]) { SensorKind::Fan }
+    else if has(&["battery", "bat"]) { SensorKind::Battery }
+    else if has(&["spd", "ddr", "dimm", "ram"]) { SensorKind::Memory }
+    else if has(&["wifi", "wlan", "iwl", "mt79", "ax2", "rtw"]) { SensorKind::Network }
+    else if has(&["acpitz", "pch", "it87", "nct", "superio", "chipset", "thermal", "motherboard"]) { SensorKind::Board }
+    else { SensorKind::Generic }
 }
 
 fn fallback_limits(chip: &str, label: &str) -> (f64, f64) {

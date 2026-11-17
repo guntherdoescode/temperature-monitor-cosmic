@@ -1,10 +1,10 @@
-use crate::sensors::{self, SensorReading, Snapshot, ThermalState};
+use crate::sensors::{self, SensorKind, SensorReading, Snapshot, ThermalState};
 use cosmic::{iced::{Alignment, Length, Subscription, futures, stream}, prelude::*, theme, widget};
 use futures::SinkExt;
 use std::{collections::HashMap, time::{Duration, Instant}};
 
 const APP_ID: &str = "io.github.guntherdoescode.CosmicTemperatureMonitor";
-const REFRESH_INTERVAL: Duration = Duration::from_secs(2);
+const REFRESH_INTERVAL: Duration = Duration::from_millis(800);
 
 pub struct AppModel {
     core: cosmic::Core,
@@ -44,13 +44,9 @@ impl cosmic::Application for AppModel {
             .push(widget::text::title1("COSMIC Temperature Monitor"))
             .push(widget::text::body("THERMAL INTELLIGENCE  /  LOCAL SYSTEM"))
             .into();
-        let refresh = widget::button::standard(if self.refreshing { "Scanning…" } else { "Refresh" })
-            .on_press(Message::Refresh).into();
 
         let mut content = widget::column::with_capacity(8).spacing(18).padding(24).width(Length::Fill);
-        content = content.push(widget::row::with_children([
-            title, widget::space::horizontal().into(), refresh,
-        ]).align_y(Alignment::Center).spacing(12));
+        content = content.push(widget::row::with_children([title]).align_y(Alignment::Center).spacing(12));
 
         let hot_count = self.readings.iter().filter(|r| r.state == ThermalState::Hot).count();
         let (summary, tint) = if self.throttle_event {
@@ -105,7 +101,7 @@ impl cosmic::Application for AppModel {
         }
 
         content = content.push(widget::text::body(
-            "SOURCE: lm-sensors  •  POLL: 2s  •  THROTTLE: Linux thermal_throttle counters",
+            "SOURCE: lm-sensors  •  POLL: 0.8s  •  THROTTLE: Linux thermal_throttle counters",
         ));
         widget::container(widget::scrollable(content)).width(Length::Fill).height(Length::Fill).into()
     }
@@ -161,7 +157,7 @@ impl AppModel {
     }
 
     fn updated_label(&self) -> String {
-        self.last_updated.map(|instant| format!("Last scan {}s ago", instant.elapsed().as_secs()))
+        self.last_updated.map(|instant| format!("Last scan {:.1}s ago", instant.elapsed().as_secs_f64()))
             .unwrap_or_else(|| "Initial scan in progress".to_owned())
     }
 
@@ -171,25 +167,65 @@ impl AppModel {
             ThermalState::Normal => ("OPERATIONAL", color(101, 168, 255)),
             ThermalState::Hot => ("HOT", color(255, 92, 98)),
         };
-        let mut heading = widget::row::with_capacity(3)
-            .push(widget::text::heading(reading.label.clone()))
+        let identity = widget::column::with_capacity(2).spacing(0)
+            .push(widget::text::caption(reading.chip.clone()))
+            .push(widget::text::heading(reading.label.clone()));
+        let mut heading = widget::row::with_capacity(4)
+            .push(sensor_icon(reading.kind, accent))
+            .push(identity)
             .push(widget::space::horizontal())
-            .push(widget::text::body(state_label).class(theme::Text::Color(accent)))
-            .align_y(Alignment::Center);
+            .push(widget::text::caption(state_label).class(theme::Text::Color(accent)))
+            .align_y(Alignment::Center)
+            .spacing(8);
         if reading.throttled {
-            heading = heading.push(widget::text::body("THROTTLING").class(theme::Text::Color(color(255, 92, 98))));
+            heading = heading.push(widget::text::caption("THROTTLING").class(theme::Text::Color(color(255, 92, 98))));
         }
 
         let history = self.history.get(&reading.id).map(|values| sparkline(values))
             .unwrap_or_else(|| "Collecting history…".to_owned());
         let limits = format!("WARN {:.0}°C    CRIT {:.0}°C", reading.warning, reading.critical);
-        let card = widget::column::with_capacity(4).spacing(10)
+        let temperature = widget::row::with_capacity(2).spacing(8)
+            .push(widget::text::title3(format!("{:.1}°C", reading.temperature)).class(theme::Text::Color(accent)))
+            .push(widget::text::caption(limits))
+            .align_y(Alignment::Center);
+        let card = widget::column::with_capacity(4).spacing(6)
             .push(heading)
-            .push(widget::text::title1(format!("{:.1}°C", reading.temperature)).class(theme::Text::Color(accent)))
-            .push(widget::text::body(limits))
-            .push(widget::text::body(history).class(theme::Text::Color(accent)));
-        widget::container(card).width(Length::Fill).padding(16).class(theme::Container::Card).into()
+            .push(temperature)
+            .push(widget::text::caption(history).class(theme::Text::Color(accent)));
+        widget::container(card).width(Length::Fill).padding(12).class(sensor_card_style()).into()
     }
+}
+
+fn sensor_card_style() -> theme::Container<'static> {
+    theme::Container::custom(|theme| {
+        let cosmic = theme.cosmic();
+        let component = &cosmic.background(false).component;
+        widget::container::Style {
+            background: Some(cosmic::iced::Background::Color(component.base.into())),
+            border: cosmic::iced::Border { radius: 12.0.into(), ..Default::default() },
+            text_color: Some(component.on.into()),
+            icon_color: Some(component.on.into()),
+            ..Default::default()
+        }
+    })
+}
+
+fn sensor_icon<'a>(kind: SensorKind, tint: cosmic::iced::Color) -> Element<'a, Message> {
+    let bytes: &'static [u8] = match kind {
+        SensorKind::Cpu => include_bytes!("../resources/icons/sensors/cpu.svg"),
+        SensorKind::Gpu => include_bytes!("../resources/icons/sensors/gpu.svg"),
+        SensorKind::Storage => include_bytes!("../resources/icons/sensors/storage.svg"),
+        SensorKind::Board => include_bytes!("../resources/icons/sensors/board.svg"),
+        SensorKind::Fan => include_bytes!("../resources/icons/sensors/fan.svg"),
+        SensorKind::Battery => include_bytes!("../resources/icons/sensors/battery.svg"),
+        SensorKind::Memory => include_bytes!("../resources/icons/sensors/memory.svg"),
+        SensorKind::Network => include_bytes!("../resources/icons/sensors/network.svg"),
+        SensorKind::Generic => include_bytes!("../resources/icons/sensors/thermometer.svg"),
+    };
+    widget::icon::icon(widget::icon::from_svg_bytes(bytes))
+        .class(theme::Svg::custom(move |_theme| widget::svg::Style { color: Some(tint) }))
+        .size(22)
+        .into()
 }
 
 fn legend_item(label: &'static str, tint: cosmic::iced::Color) -> Element<'static, Message> {
